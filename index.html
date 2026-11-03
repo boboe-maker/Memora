@@ -177,10 +177,15 @@ $("se").onclick=async()=>{
   }catch(e){$("rs").textContent="Sem conexão com a busca. Você ainda pode enviar a capa manualmente."}
 };
 $("ov").addEventListener("keydown",e=>{
+  const t=e.target;
   if(e.key==="Escape"){close();return}
-  if(e.key!=="Enter"||e.target.tagName==="TEXTAREA"||e.target.tagName==="BUTTON")return;
+  if(e.key!=="Enter"||t.tagName==="BUTTON"||t.tagName==="SELECT")return;
+  if(t.tagName==="TEXTAREA"&&!e.ctrlKey)return;
   e.preventDefault();
-  if(e.target.id==="n"&&!cover&&!$("rs").innerHTML)$("se").click();else $("sv").click();
+  if(e.ctrlKey||t.id==="lk"||t.id==="nt"){$("sv").click();return}
+  if(t.id==="n"&&!cover&&!$("rs").innerHTML){$("se").click();return}
+  const next={n:"c",c:"tt",tt:"lk"}[t.id];
+  if(next)$(next).focus();
 });
 $("q").oninput=render;
 $("exp").onclick=()=>{
