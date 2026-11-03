@@ -1,19 +1,22 @@
-# 📚 BiblioManga
+# 📚 Memora
 
-Organizador pessoal de mangás, manhwas e manhuas: guarde em qual capítulo você parou, o que está lendo, o que quer ler e o que já terminou.
+Seu catálogo pessoal de mangás, animes, filmes, séries e livros: guarde onde você parou, o que está acompanhando, o que quer ver e o que já terminou.
 
-**Use agora:** https://boboe-maker.github.io/BiblioManga/
+**Use agora:** https://boboe-maker.github.io/Memora/
 
 ## Recursos
-- Biblioteca com status: Lendo, Quero ler, Lido e Pausado
-- Contador de capítulos com botões + e −
-- Busca de capa e dados pela API pública do [AniList](https://anilist.co), ou envio de capa própria
+- Abas por categoria: mangás, animes, filmes e séries, livros
+- Status: Lendo/Assistindo, Quero ler/assistir, Lido/Assistido e Pausado
+- Contador de capítulos, episódios ou páginas com botões + e −
+- Busca de capa: [AniList](https://anilist.co) (mangás e animes), [TMDB](https://www.themoviedb.org) (filmes e séries, requer chave gratuita) e [Open Library](https://openlibrary.org) (livros). Também dá pra enviar capa própria
 - Campo opcional para colar o link de onde você lê
 - Funciona offline e pode ser instalado como app (PWA)
 - Sem cadastro: os dados ficam só no seu navegador. Use **Exportar backup** de vez em quando
 
 ## Aviso
-O BiblioManga é apenas um organizador pessoal. Ele **não hospeda, indica nem busca conteúdo** de nenhum site de leitura. Os links são adicionados manualmente pelo usuário, que é o único responsável por eles. Apoie os autores lendo em plataformas oficiais.
+Este produto usa a API do TMDB, mas não é endossado nem certificado por ela.
+
+O Memora é apenas um organizador pessoal. Ele **não hospeda, indica nem busca conteúdo** de nenhum site de leitura. Os links são adicionados manualmente pelo usuário, que é o único responsável por eles. Apoie os autores lendo em plataformas oficiais.
 
 ## Licença
 MIT. Veja o arquivo LICENSE.

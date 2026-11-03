@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#e8453c"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>BiblioManga</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#e8453c"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Memora</title>
 <style>
 :root{--bg:#f6f4f1;--card:#fff;--tx:#1d1b20;--mut:#76717d;--bd:#e4e0e8;--ac:#e8453c;--ac2:#fff;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
@@ -53,7 +53,7 @@ label{font-size:13px;color:var(--mut);display:flex;flex-direction:column;gap:5px
 </head>
 <body>
 <div class="wrap">
-  <h1>📚 BiblioManga</h1>
+  <h1>📚 Memora</h1>
   <p class="sub">Seu catálogo pessoal de mangás, animes, filmes e livros: nunca mais perca onde parou.</p>
   <div class="tabs cats" id="cats"></div>
   <div class="bar"><input id="q" type="search" placeholder="Buscar por nome…"></div>
@@ -64,6 +64,7 @@ label{font-size:13px;color:var(--mut);display:flex;flex-direction:column;gap:5px
     <button id="imp">⬆ Importar backup</button>
     <input type="file" id="impf" accept="application/json" hidden>
   </div>
+  <p class="sub" style="text-align:center;font-size:12px;margin-top:16px">Dados de mangás e animes: AniList · filmes e séries: TMDB · livros: Open Library</p>
 </div>
 <button class="p fab" id="add">+ Adicionar</button>
 <div class="ov" id="ov">
@@ -95,6 +96,7 @@ label{font-size:13px;color:var(--mut);display:flex;flex-direction:column;gap:5px
   </div>
 </div>
 <script>
+const TMDB_KEY="";
 const KEY="biblioteca-manga-v1",SK=["lendo","quero","lido","pausado"];
 const RD=["Lendo","Quero ler","Lido","Pausado"],WT=["Assistindo","Quero assistir","Assistido","Pausado"];
 const C={manga:{n:"📖 Mangás",u:"Cap.",ty:["Mangá","Manhwa","Manhua","Outro"],v:RD},
@@ -195,6 +197,13 @@ async function find(q,ct){
   if(ct==="livro"){
     const d=await j("https://openlibrary.org/search.json?limit=8&fields=title,cover_i,number_of_pages_median&q="+encodeURIComponent(q));
     return d.docs.filter(x=>x.cover_i).slice(0,6).map(x=>({n:x.title,cv:"https://covers.openlibrary.org/b/id/"+x.cover_i+"-M.jpg",tt:x.number_of_pages_median||"",ty:"Livro"}));
+  }
+  let k=TMDB_KEY||localStorage.getItem("bm-tmdb")||"";
+  if(!k){k=(prompt("Para buscar filmes e séries com pôsteres oficiais, cole sua chave gratuita do TMDB (veja o README). Deixe em branco para usar a busca simples.")||"").trim();if(k)try{localStorage.setItem("bm-tmdb",k)}catch(e){}}
+  if(k){
+    const d=await j("https://api.themoviedb.org/3/search/multi?include_adult=false&language=pt-BR&api_key="+encodeURIComponent(k)+"&query="+encodeURIComponent(q));
+    if(d.success===false){try{localStorage.removeItem("bm-tmdb")}catch(e){}throw 0}
+    return d.results.filter(x=>(x.media_type==="movie"||x.media_type==="tv")&&x.poster_path).slice(0,6).map(x=>({n:x.title||x.name,cv:"https://image.tmdb.org/t/p/w342"+x.poster_path,tt:"",ty:x.media_type==="tv"?"Série":"Filme"}));
   }
   const u=(m,e)=>"https://itunes.apple.com/search?limit=4&country=br&media="+m+"&entity="+e+"&term="+encodeURIComponent(q);
   const e0=()=>({results:[]});
