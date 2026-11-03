@@ -176,6 +176,12 @@ $("se").onclick=async()=>{
       $("ty").value={KR:"Manhwa",CN:"Manhua"}[x.countryOfOrigin]||"Mangá";$("rs").innerHTML=""});
   }catch(e){$("rs").textContent="Sem conexão com a busca. Você ainda pode enviar a capa manualmente."}
 };
+$("ov").addEventListener("keydown",e=>{
+  if(e.key==="Escape"){close();return}
+  if(e.key!=="Enter"||e.target.tagName==="TEXTAREA"||e.target.tagName==="BUTTON")return;
+  e.preventDefault();
+  if(e.target.id==="n"&&!cover&&!$("rs").innerHTML)$("se").click();else $("sv").click();
+});
 $("q").oninput=render;
 $("exp").onclick=()=>{
   const a=document.createElement("a");
