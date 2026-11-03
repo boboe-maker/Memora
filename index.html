@@ -48,14 +48,16 @@ label{font-size:13px;color:var(--mut);display:flex;flex-direction:column;gap:5px
 .foot{margin-top:30px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .foot button{font-size:13px;color:var(--mut)}
 .rs{display:flex;gap:8px;overflow-x:auto}.rs img{width:60px;aspect-ratio:2/3;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid transparent}.rs img:hover{border-color:var(--ac)}.go{font-size:12px;color:var(--ac);text-decoration:none;font-weight:600}
+.tabs.cats button{font-weight:600;padding:10px 16px}.tabs.cats button.on{background:var(--ac);border-color:var(--ac);color:#fff}.tabs.st button{font-size:13px;padding:6px 12px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>📚 Minha Biblioteca</h1>
-  <p class="sub">Mangás, manhwas e manhuas: nunca mais perca o capítulo em que parou.</p>
+  <h1>📚 BiblioManga</h1>
+  <p class="sub">Seu catálogo pessoal de mangás, animes, filmes e livros: nunca mais perca onde parou.</p>
+  <div class="tabs cats" id="cats"></div>
   <div class="bar"><input id="q" type="search" placeholder="Buscar por nome…"></div>
-  <div class="tabs" id="tabs"></div>
+  <div class="tabs st" id="tabs"></div>
   <div class="grid" id="grid"></div>
   <div class="foot">
     <button id="exp">⬇ Exportar backup</button>
@@ -64,7 +66,6 @@ label{font-size:13px;color:var(--mut);display:flex;flex-direction:column;gap:5px
   </div>
 </div>
 <button class="p fab" id="add">+ Adicionar</button>
-
 <div class="ov" id="ov">
   <div class="mod">
     <h2 id="mt" style="margin:0">Novo título</h2>
@@ -75,57 +76,70 @@ label{font-size:13px;color:var(--mut);display:flex;flex-direction:column;gap:5px
         <button id="rc" type="button" style="font-size:13px">Remover capa</button>
       </div>
     </div>
+    <label>Categoria<select id="ct"></select></label>
     <label>Nome<span class="row"><input id="n" placeholder="Ex.: Solo Leveling"><button id="se" type="button" style="flex:none">🔎 Buscar capa</button></span></label><div class="rs" id="rs"></div>
     <div class="row">
-      <label>Tipo<select id="ty"><option>Mangá</option><option>Manhwa</option><option>Manhua</option><option>Outro</option></select></label>
+      <label>Tipo<select id="ty"></select></label>
       <label>Status<select id="st"></select></label>
     </div>
     <div class="row">
-      <label>Parei no cap.<input id="c" type="number" min="0" step="any" value="0"></label>
+      <label>Parei em (<span id="uc"></span>)<input id="c" type="number" min="0" step="any" value="0"></label>
       <label>Total (opcional)<input id="tt" type="number" min="0" step="any"></label>
     </div>
-    <label>Link de onde você lê (opcional)<input id="lk" type="url" placeholder="https://…"></label>
-    <label>Anotações<textarea id="nt" rows="2" placeholder="Onde ler, observações…"></textarea></label>
+    <label>Link de onde você acessa (opcional)<input id="lk" type="url" placeholder="https://…"></label>
+    <label>Anotações<textarea id="nt" rows="2" placeholder="Observações…"></textarea></label>
     <div class="acts">
       <button class="del" id="dl" type="button">Excluir</button>
       <span style="display:flex;gap:8px"><button id="cx" type="button">Cancelar</button><button class="p" id="sv" type="button">Salvar</button></span>
     </div>
   </div>
 </div>
-
 <script>
-const ST={lendo:"Lendo",quero:"Quero ler",lido:"Lido",pausado:"Pausado"};
-const KEY="biblioteca-manga-v1";
-let items=[],tab="todos",editing=null,cover="";
+const KEY="biblioteca-manga-v1",SK=["lendo","quero","lido","pausado"];
+const RD=["Lendo","Quero ler","Lido","Pausado"],WT=["Assistindo","Quero assistir","Assistido","Pausado"];
+const C={manga:{n:"📖 Mangás",u:"Cap.",ty:["Mangá","Manhwa","Manhua","Outro"],v:RD},
+anime:{n:"📺 Animes",u:"Ep.",ty:["Anime","Donghua","Outro"],v:WT},
+filme:{n:"🎬 Filmes e séries",u:"Ep.",ty:["Filme","Série","Documentário","Outro"],v:WT},
+livro:{n:"📕 Livros",u:"Pág.",ty:["Livro","Light novel","Outro"],v:RD,step:10}};
+let items=[],cat="manga",tab="todos",editing=null,cover="";
 const $=id=>document.getElementById(id);
 try{items=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){items=[]}
+items.forEach(i=>{if(!i.cat)i.cat="manga"});
+try{cat=localStorage.getItem("bm-cat")||"manga"}catch(e){}
+if(!C[cat])cat="manga";
 function save(){try{localStorage.setItem(KEY,JSON.stringify(items))}catch(e){alert("Não consegui salvar (armazenamento cheio?). Exporte um backup.")}}
-$("st").innerHTML=Object.entries(ST).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
+const sl=(c,k)=>C[c].v[SK.indexOf(k)];
 function safe(u){u=(u||"").trim();try{const x=new URL(u);return /^https?:$/.test(x.protocol)?x.href:""}catch(e){return ""}}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+$("ct").innerHTML=Object.entries(C).map(([k,v])=>`<option value="${k}">${v.n}</option>`).join("");
+function fillSel(){const c=C[$("ct").value];
+  $("ty").innerHTML=c.ty.map(x=>`<option>${x}</option>`).join("");
+  $("st").innerHTML=SK.map((k,j)=>`<option value="${k}">${c.v[j]}</option>`).join("");
+  $("uc").textContent=c.u}
+$("ct").onchange=fillSel;
 function renderTabs(){
-  const all=[["todos","Todos"],...Object.entries(ST)];
-  $("tabs").innerHTML=all.map(([k,v])=>{const n=k==="todos"?items.length:items.filter(i=>i.st===k).length;
-    return `<button class="${tab===k?"on":""}" data-t="${k}">${v} (${n})</button>`}).join("");
+  $("cats").innerHTML=Object.entries(C).map(([k,v])=>`<button class="${cat===k?"on":""}" data-c="${k}">${v.n} (${items.filter(i=>i.cat===k).length})</button>`).join("");
+  $("cats").querySelectorAll("button").forEach(b=>b.onclick=()=>{cat=b.dataset.c;tab="todos";try{localStorage.setItem("bm-cat",cat)}catch(e){}render()});
+  const all=[["todos","Todos"],...SK.map(k=>[k,sl(cat,k)])],mine=items.filter(i=>i.cat===cat);
+  $("tabs").innerHTML=all.map(([k,v])=>`<button class="${tab===k?"on":""}" data-t="${k}">${v} (${k==="todos"?mine.length:mine.filter(i=>i.st===k).length})</button>`).join("");
   $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
 }
 function render(){
   renderTabs();
   const q=$("q").value.trim().toLowerCase();
-  const list=items.filter(i=>(tab==="todos"||i.st===tab)&&i.n.toLowerCase().includes(q));
-  $("grid").innerHTML=list.length?"":"";
-  if(!list.length){$("grid").innerHTML=`<div class="empty" style="grid-column:1/-1">${items.length?"Nada por aqui ainda.":"Sua biblioteca está vazia. Toque em “+ Adicionar” para começar."}</div>`;return}
+  const list=items.filter(i=>i.cat===cat&&(tab==="todos"||i.st===tab)&&i.n.toLowerCase().includes(q));
+  if(!list.length){$("grid").innerHTML=`<div class="empty" style="grid-column:1/-1">${items.some(i=>i.cat===cat)?"Nada por aqui ainda.":"Esta aba está vazia. Toque em “+ Adicionar” para começar."}</div>`;return}
   $("grid").innerHTML=list.map(i=>`<div class="card">
-    <div class="cov" data-e="${i.id}">${i.cv?`<img referrerpolicy="no-referrer" src="${i.cv}" alt="">`:"📖"}<span class="tag">${ST[i.st]}</span></div>
-    <div class="inf"><div class="t">${esc(i.n)}</div>${i.lk?`<a class="go" href="${esc(i.lk)}" target="_blank" rel="noopener noreferrer">Continuar lendo ▸</a>`:""}
-    <div class="ch"><button data-m="${i.id}">−</button><span>Cap. <b>${i.c}</b>${i.tt?" / "+i.tt:""}</span><button data-p="${i.id}">+</button></div></div></div>`).join("");
+    <div class="cov" data-e="${i.id}">${i.cv?`<img referrerpolicy="no-referrer" src="${esc(i.cv)}" alt="">`:"📖"}<span class="tag">${sl(i.cat,i.st)}</span></div>
+    <div class="inf"><div class="t">${esc(i.n)}</div>${i.lk?`<a class="go" href="${esc(i.lk)}" target="_blank" rel="noopener noreferrer">Abrir link ▸</a>`:""}
+    <div class="ch"><button data-m="${i.id}">−</button><span>${C[i.cat].u} <b>${i.c}</b>${i.tt?" / "+i.tt:""}</span><button data-p="${i.id}">+</button></div></div></div>`).join("");
   $("grid").querySelectorAll("[data-e]").forEach(e=>e.onclick=()=>open(e.dataset.e));
   $("grid").querySelectorAll("[data-p]").forEach(e=>e.onclick=()=>bump(e.dataset.p,1));
   $("grid").querySelectorAll("[data-m]").forEach(e=>e.onclick=()=>bump(e.dataset.m,-1));
 }
 function bump(id,d){
   const i=items.find(x=>x.id===id);if(!i)return;
-  i.c=Math.max(0,Math.floor(i.c)+d);
+  i.c=Math.max(0,Math.floor(i.c)+d*(C[i.cat].step||1));
   if(d>0&&i.st==="quero")i.st="lendo";
   if(i.tt&&i.c>=i.tt)i.st="lido";
   save();render();
@@ -133,7 +147,8 @@ function bump(id,d){
 function open(id){
   editing=id||null;const i=id?items.find(x=>x.id===id):null;
   $("mt").textContent=i?"Editar título":"Novo título";
-  $("n").value=i?i.n:"";$("ty").value=i?i.ty:"Mangá";$("st").value=i?i.st:(tab in ST?tab:"lendo");
+  $("ct").value=i?i.cat:cat;fillSel();
+  $("n").value=i?i.n:"";if(i)$("ty").value=i.ty;$("st").value=i?i.st:(SK.includes(tab)?tab:"lendo");
   $("c").value=i?i.c:0;$("tt").value=i&&i.tt?i.tt:"";$("nt").value=i?i.nt||"":"";$("lk").value=i?i.lk||"":"";$("rs").innerHTML="";
   cover=i?i.cv||"":"";$("cf").value="";setPv();
   $("dl").style.visibility=i?"visible":"hidden";
@@ -156,24 +171,39 @@ $("cf").onchange=e=>{
 };
 $("sv").onclick=()=>{
   const n=$("n").value.trim();if(!n){$("n").focus();return}
-  const d={n,ty:$("ty").value,st:$("st").value,c:Math.max(0,parseFloat($("c").value)||0),tt:parseFloat($("tt").value)||0,nt:$("nt").value.trim(),lk:safe($("lk").value),cv:cover};
+  const d={n,cat:$("ct").value,ty:$("ty").value,st:$("st").value,c:Math.max(0,parseFloat($("c").value)||0),tt:parseFloat($("tt").value)||0,nt:$("nt").value.trim(),lk:safe($("lk").value),cv:cover};
   let sid=editing;
   if(editing)Object.assign(items.find(x=>x.id===editing),d);
   else{sid=Date.now().toString(36)+Math.random().toString(36).slice(2,6);items.unshift({id:sid,ts:Date.now(),...d})}
+  cat=d.cat;try{localStorage.setItem("bm-cat",cat)}catch(e){}
   save();close();render();
 };
 $("dl").onclick=()=>{if(confirm("Excluir este título?")){const did=editing;items=items.filter(x=>x.id!==did);save();close();render()}};
+async function find(q,ct){
+  const j=u=>fetch(u).then(r=>r.json());
+  if(ct==="manga"||ct==="anime"){
+    const a=ct==="anime";
+    const r=await fetch("https://graphql.anilist.co",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:"query($q:String,$t:MediaType){Page(perPage:6){media(search:$q,type:$t){title{romaji english}coverImage{large}chapters episodes countryOfOrigin}}}",variables:{q,t:a?"ANIME":"MANGA"}})});
+    return (await r.json()).data.Page.media.map(x=>({n:x.title.english||x.title.romaji,cv:x.coverImage.large,tt:(a?x.episodes:x.chapters)||"",ty:a?(x.countryOfOrigin==="CN"?"Donghua":"Anime"):({KR:"Manhwa",CN:"Manhua"}[x.countryOfOrigin]||"Mangá")}));
+  }
+  if(ct==="livro"){
+    const d=await j("https://openlibrary.org/search.json?limit=8&fields=title,cover_i,number_of_pages_median&q="+encodeURIComponent(q));
+    return d.docs.filter(x=>x.cover_i).slice(0,6).map(x=>({n:x.title,cv:"https://covers.openlibrary.org/b/id/"+x.cover_i+"-M.jpg",tt:x.number_of_pages_median||"",ty:"Livro"}));
+  }
+  const u=(m,e)=>"https://itunes.apple.com/search?limit=4&country=br&media="+m+"&entity="+e+"&term="+encodeURIComponent(q);
+  const [a,b]=await Promise.all([j(u("movie","movie")),j(u("tvShow","tvSeason"))]);
+  const f=(l,t)=>l.results.filter(x=>x.artworkUrl100).map(x=>({n:x.trackName||x.collectionName,cv:x.artworkUrl100.replace("100x100bb","300x450bb"),tt:"",ty:t}));
+  return [...f(a,"Filme"),...f(b,"Série")].slice(0,6);
+}
 $("se").onclick=async()=>{
   const q=$("n").value.trim();if(!q){$("n").focus();return}
   $("rs").textContent="Buscando…";
   try{
-    const r=await fetch("https://graphql.anilist.co",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:"query($q:String){Page(perPage:6){media(search:$q,type:MANGA){title{romaji english}coverImage{large}chapters countryOfOrigin}}}",variables:{q}})});
-    const m=(await r.json()).data.Page.media;window._r=m;
-    $("rs").innerHTML=m.length?m.map((x,k)=>`<img referrerpolicy="no-referrer" data-k="${k}" src="${esc(x.coverImage.large)}" title="${esc(x.title.english||x.title.romaji)}">`).join(""):"Nada encontrado.";
+    const m=await find(q,$("ct").value);window._r=m;
+    $("rs").innerHTML=m.length?m.map((x,k)=>`<img referrerpolicy="no-referrer" data-k="${k}" src="${esc(x.cv)}" title="${esc(x.n)}">`).join(""):"Nada encontrado.";
     $("rs").querySelectorAll("img").forEach(im=>im.onclick=()=>{const x=window._r[im.dataset.k];
-      $("n").value=x.title.english||x.title.romaji;cover=x.coverImage.large;setPv();
-      if(x.chapters)$("tt").value=x.chapters;
-      $("ty").value={KR:"Manhwa",CN:"Manhua"}[x.countryOfOrigin]||"Mangá";$("rs").innerHTML=""});
+      $("n").value=x.n;cover=x.cv;setPv();if(x.tt)$("tt").value=x.tt;
+      if([...$("ty").options].some(o=>o.value===x.ty))$("ty").value=x.ty;$("rs").innerHTML=""});
   }catch(e){$("rs").textContent="Sem conexão com a busca. Você ainda pode enviar a capa manualmente."}
 };
 $("ov").addEventListener("keydown",e=>{
@@ -197,7 +227,7 @@ $("imp").onclick=()=>$("impf").click();
 $("impf").onchange=e=>{
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d)&&confirm("Isso substitui sua biblioteca atual. Continuar?")){const old=items.map(x=>x.id);items=d;save();render()}}catch(x){alert("Arquivo inválido.")}};
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d)&&confirm("Isso substitui sua biblioteca atual. Continuar?")){items=d;items.forEach(i=>{if(!i.cat)i.cat="manga"});save();render()}}catch(x){alert("Arquivo inválido.")}};
   r.readAsText(f);
 };
 render();
