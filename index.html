@@ -179,6 +179,12 @@ $("sv").onclick=()=>{
   save();close();render();
 };
 $("dl").onclick=()=>{if(confirm("Excluir este título?")){const did=editing;items=items.filter(x=>x.id!==did);save();close();render()}};
+function jsonp(u){return new Promise((ok,no)=>{
+  const f="cb"+Date.now()+Math.floor(Math.random()*1e4),sc=document.createElement("script");
+  const t=setTimeout(()=>{cl();no()},7000);
+  function cl(){clearTimeout(t);delete window[f];sc.remove()}
+  window[f]=d=>{cl();ok(d)};sc.onerror=()=>{cl();no()};
+  sc.src=u+"&callback="+f;document.head.appendChild(sc)})}
 async function find(q,ct){
   const j=u=>fetch(u).then(r=>r.json());
   if(ct==="manga"||ct==="anime"){
@@ -191,9 +197,13 @@ async function find(q,ct){
     return d.docs.filter(x=>x.cover_i).slice(0,6).map(x=>({n:x.title,cv:"https://covers.openlibrary.org/b/id/"+x.cover_i+"-M.jpg",tt:x.number_of_pages_median||"",ty:"Livro"}));
   }
   const u=(m,e)=>"https://itunes.apple.com/search?limit=4&country=br&media="+m+"&entity="+e+"&term="+encodeURIComponent(q);
-  const [a,b]=await Promise.all([j(u("movie","movie")),j(u("tvShow","tvSeason"))]);
+  const e0=()=>({results:[]});
+  const [a,b]=await Promise.all([jsonp(u("movie","movie")).catch(e0),jsonp(u("tvShow","tvSeason")).catch(e0)]);
   const f=(l,t)=>l.results.filter(x=>x.artworkUrl100).map(x=>({n:x.trackName||x.collectionName,cv:x.artworkUrl100.replace("100x100bb","300x450bb"),tt:"",ty:t}));
-  return [...f(a,"Filme"),...f(b,"Série")].slice(0,6);
+  const r=[...f(a,"Filme"),...f(b,"Série")].slice(0,6);
+  if(r.length)return r;
+  const w=await j("https://pt.wikipedia.org/w/api.php?action=query&generator=search&gsrlimit=8&prop=pageimages&piprop=thumbnail&pithumbsize=300&format=json&origin=*&gsrsearch="+encodeURIComponent(q+" filme"));
+  return Object.values((w.query||{}).pages||{}).filter(p=>p.thumbnail).slice(0,6).map(p=>({n:p.title.replace(/ \((filme|série)[^)]*\)/i,""),cv:p.thumbnail.source,tt:"",ty:"Filme"}));
 }
 $("se").onclick=async()=>{
   const q=$("n").value.trim();if(!q){$("n").focus();return}
